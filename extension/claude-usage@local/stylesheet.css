@@ -1,0 +1,7 @@
+.claude-usage-icon { width: 16px; height: 16px; }
+.claude-usage-header { font-weight: bold; }
+.claude-usage-row { min-width: 260px; spacing: 6px; padding: 4px 0; }
+.claude-usage-pct { font-weight: bold; font-feature-settings: "tnum"; }
+.claude-usage-bar { height: 10px; }
+.claude-usage-dim { font-size: 0.85em; color: #9a9a9a; }
+.claude-usage-notice { font-size: 0.85em; color: #ffb300; }
