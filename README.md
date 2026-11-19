@@ -12,6 +12,7 @@ Colors: green below 70%, amber from 70%, red from 90%. Everything turns grey whe
 ## Requirements
 
 - GNOME Shell **50** (tested on Ubuntu 26.04, Wayland). Other versions are not declared in `metadata.json` yet.
+- `python3`, used by `install.sh` to compile translations
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and logged in on the same machine with a Claude subscription (Pro or Max). The extension uses Claude Code's login and has no login of its own.
 
 ## Install
@@ -62,13 +63,15 @@ The downside: access tokens are short-lived (about an hour or two). If you haven
 | Symptom | What to check |
 |---|---|
 | No icon after install | Log out and back in. Then run `gnome-extensions info claude-usage@local`. |
-| Grey charts, "ข้อมูลเก่า · เปิด claude เพื่อ refresh token" | The Claude Code token has expired. Run `claude` once. |
-| "ดึงข้อมูลไม่ได้ (HTTP …)" | The usage endpoint returned an error. It retries with backoff. If it persists, the endpoint may have changed. |
+| Grey charts, "Stale data · run claude to refresh the token" | The Claude Code token has expired. Run `claude` once. |
+| "Could not fetch data (HTTP …)" | The usage endpoint returned an error. It retries with backoff. If it persists, the endpoint may have changed. |
 | Anything else | `journalctl --user -b /usr/bin/gnome-shell \| grep -i claude` |
 
-## Language
+## Translations
 
-The dropdown text is currently in **Thai** (for example, `รีเฟรช` = Refresh, `อีก 1h 50m` = 1h 50m left). Pull requests adding gettext translations are welcome.
+The UI is in English and follows your desktop language when a translation exists. Current translations: **Thai (`th`)**.
+
+To add a language, copy `po/th.po` to `po/<lang>.po`, translate the `msgstr` lines (keep every `%s`), run the tests, and open a pull request. `install.sh` compiles the `.po` files with a small stdlib script (`scripts/po2mo.py`), so users don't need the gettext tools.
 
 ## Development
 
@@ -78,13 +81,17 @@ extension/claude-usage@local/
 ├── lib.js           # pure logic: credentials, parsing, colors, time formatting, backoff
 ├── metadata.json
 └── stylesheet.css
-tests/test_lib.js    # unit tests for lib.js
+po/                  # translations (<lang>.po)
+scripts/po2mo.py     # .po → .mo compiler used by install.sh
+tests/test_lib.js    # unit tests for lib.js (gjs)
+tests/test_po.py     # every translatable string is translated, placeholders match
 ```
 
 Run the tests with gjs (the expected times assume the Asia/Bangkok timezone):
 
 ```sh
 TZ=Asia/Bangkok gjs -m tests/test_lib.js
+python3 -m unittest discover -s tests -p 'test_po.py'
 ```
 
 To try changes without touching your session, run a throwaway headless shell:
@@ -94,3 +101,7 @@ dbus-run-session -- gnome-shell --headless --wayland --no-x11 --virtual-monitor 
 ```
 
 Before you start it, point `XDG_DATA_HOME` and `XDG_CONFIG_HOME` at temporary directories and set `GSETTINGS_BACKEND=keyfile`.
+
+## License
+
+[MIT](LICENSE)

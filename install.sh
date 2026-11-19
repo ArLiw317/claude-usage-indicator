@@ -17,6 +17,13 @@ fi
 mkdir -p "$dest"
 install -m 644 "$here/extension/$uuid/"{metadata.json,extension.js,lib.js,stylesheet.css} "$dest/"
 
+# Compile translations (stdlib Python, no gettext package needed).
+for po in "$here"/po/*.po; do
+    lang="$(basename "$po" .po)"
+    mkdir -p "$dest/locale/$lang/LC_MESSAGES"
+    python3 "$here/scripts/po2mo.py" "$po" "$dest/locale/$lang/LC_MESSAGES/claude-usage.mo"
+done
+
 if gnome-extensions enable "$uuid" 2>/dev/null; then
     echo "enabled $uuid"
 else

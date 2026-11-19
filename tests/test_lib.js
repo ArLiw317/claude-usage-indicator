@@ -45,9 +45,16 @@ test('hexToRgb', () => eq(Lib.hexToRgb('#ff0080').map(x => Math.round(x * 255)),
 
 // These assume TZ=Asia/Bangkok
 const now = new Date('2026-11-19T09:30:00Z'); // 16:30 BKK
-test('reset same day', () => eq(Lib.formatReset(new Date('2026-11-19T11:20:00Z'), now), 'reset 18:20 · อีก 1h 50m'));
-test('reset other day', () => eq(Lib.formatReset(new Date('2026-11-21T13:00:00Z'), now), 'reset Sat 20:00 · อีก 2d 3h'));
-test('reset past/unknown', () => eq([Lib.formatReset(new Date(now - 60e3), now), Lib.formatReset(null, now)], ['reset แล้ว', 'reset ไม่ทราบเวลา']));
+test('reset same day', () => eq(Lib.formatReset(new Date('2026-11-19T11:20:00Z'), now), 'resets 18:20 · 1h 50m left'));
+test('reset other day', () => eq(Lib.formatReset(new Date('2026-11-21T13:00:00Z'), now), 'resets Sat 20:00 · 2d 3h left'));
+test('reset past/unknown', () => eq([Lib.formatReset(new Date(now - 60e3), now), Lib.formatReset(null, now)], ['resetting now', 'reset time unknown']));
+
+test('reset is translated', () => {
+    const th = {'resets %s · %s left': 'reset %s · อีก %s', Sat: 'ส.'};
+    const _ = k => th[k] ?? k;
+    eq(Lib.formatReset(new Date('2026-11-21T13:00:00Z'), now, _), 'reset ส. 20:00 · อีก 2d 3h');
+});
+test('fmt', () => eq(Lib.fmt('a %s b %s%', 1, 2), 'a 1 b 2%'));
 
 test('backoff', () => eq([0, 1, 2, 5, 9].map(f => Lib.nextDelay(f, 180, 1800)), [180, 360, 720, 1800, 1800]));
 

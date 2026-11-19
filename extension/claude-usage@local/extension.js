@@ -4,7 +4,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import Soup from 'gi://Soup?version=3.0';
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -134,7 +134,7 @@ class UsageRow extends PopupMenu.PopupBaseMenuItem {
         }
         this._pct.text = `${Math.round(win.percent)}%`;
         this._bar.setValue(win.percent, stale ? Lib.COLORS.stale : Lib.colorFor(win.percent));
-        this._reset.text = Lib.formatReset(win.resetsAt, now);
+        this._reset.text = Lib.formatReset(win.resetsAt, now, _);
     }
 });
 
@@ -146,17 +146,17 @@ class Indicator extends PanelMenu.Button {
         this.add_child(this._rings);
         this.accessible_name = 'Claude usage';
 
-        this._header = new PopupMenu.PopupMenuItem('Claude usage', {reactive: false, can_focus: false});
+        this._header = new PopupMenu.PopupMenuItem(_('Claude usage'), {reactive: false, can_focus: false});
         this._header.label.add_style_class_name('claude-usage-header');
-        this._session = new UsageRow('Current session');
-        this._week = new UsageRow('This week');
+        this._session = new UsageRow(_('Current session'));
+        this._week = new UsageRow(_('This week'));
         this._notice = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         this._notice.label.add_style_class_name('claude-usage-notice');
 
         this._footer = new PopupMenu.PopupBaseMenuItem();
-        this._status = new St.Label({text: 'กำลังโหลด…', x_expand: true, style_class: 'claude-usage-dim'});
+        this._status = new St.Label({text: _('Loading…'), x_expand: true, style_class: 'claude-usage-dim'});
         this._footer.add_child(this._status);
-        this._footer.add_child(new St.Label({text: '⟳ รีเฟรช'}));
+        this._footer.add_child(new St.Label({text: `⟳ ${_('Refresh')}`}));
         this._footer.connect('activate', () => onRefresh());
 
         for (const item of [this._header, this._session, this._week, this._notice])
@@ -182,12 +182,14 @@ class Indicator extends PanelMenu.Button {
         const now = new Date();
         const stale = Boolean(error) || !usage;
 
-        this._header.label.text = plan ? `Claude ${plan[0].toUpperCase()}${plan.slice(1)} usage` : 'Claude usage';
+        this._header.label.text = plan
+            ? Lib.fmt(_('Claude %s usage'), `${plan[0].toUpperCase()}${plan.slice(1)}`)
+            : _('Claude usage');
         this._session.update(usage?.session, stale, now);
         this._week.update(usage?.week, stale, now);
         this._notice.visible = Boolean(error);
         this._notice.label.text = error ?? '';
-        this._status.text = fetchedAt ? `อัปเดต ${Lib.formatClock(fetchedAt)}` : 'กำลังโหลด…';
+        this._status.text = fetchedAt ? Lib.fmt(_('Updated %s'), Lib.formatClock(fetchedAt)) : _('Loading…');
 
         const s = usage?.session.percent ?? 0;
         const w = usage?.week.percent ?? 0;
@@ -196,12 +198,17 @@ class Indicator extends PanelMenu.Button {
             [w, stale ? Lib.COLORS.stale : Lib.colorFor(w)],
         ]);
         this.accessible_name = usage
-            ? `Claude usage: session ${Math.round(s)}%, week ${Math.round(w)}%`
-            : 'Claude usage';
+            ? Lib.fmt(_('Claude usage: session %s%, week %s%'), Math.round(s), Math.round(w))
+            : _('Claude usage');
     }
 });
 
 export default class ClaudeUsageExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
+        this.initTranslations();
+    }
+
     enable() {
         this._cancellable = new Gio.Cancellable();
         this._session = new Soup.Session({timeout: 15, user_agent: 'claude-usage-gnome/0.2'});
@@ -288,8 +295,8 @@ export default class ClaudeUsageExtension extends Extension {
             this._failures++;
             tokenProblem = e instanceof Lib.TokenExpired;
             const msg = tokenProblem
-                ? 'ข้อมูลเก่า · เปิด claude เพื่อ refresh token'
-                : `ดึงข้อมูลไม่ได้ (${e instanceof Lib.FetchError ? e.message : 'error'})`;
+                ? _('Stale data · run claude to refresh the token')
+                : Lib.fmt(_('Could not fetch data (%s)'), e instanceof Lib.FetchError ? e.message : 'error');
             this._state = {...this._state, error: msg};
         } finally {
             this._busy = false;

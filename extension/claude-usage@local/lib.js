@@ -67,17 +67,24 @@ export function formatClock(date) {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function formatReset(resetsAt, now) {
+// Replace %s placeholders in order. Keeps translatable strings whole.
+export function fmt(template, ...args) {
+    let i = 0;
+    return template.replace(/%s/g, () => String(args[i++] ?? ''));
+}
+
+// `_` is the gettext function; tests pass the identity to get English.
+export function formatReset(resetsAt, now, _ = s => s) {
     if (!resetsAt)
-        return 'reset ไม่ทราบเวลา';
+        return _('reset time unknown');
     const mins = Math.floor((resetsAt - now) / 60_000);
     if (mins <= 0)
-        return 'reset แล้ว';
+        return _('resetting now');
     const h = Math.floor(mins / 60);
     const left = h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${pad(mins % 60)}m`;
     const sameDay = resetsAt.toDateString() === now.toDateString();
-    const when = sameDay ? formatClock(resetsAt) : `${DAYS[resetsAt.getDay()]} ${formatClock(resetsAt)}`;
-    return `reset ${when} · อีก ${left}`;
+    const when = sameDay ? formatClock(resetsAt) : `${_(DAYS[resetsAt.getDay()])} ${formatClock(resetsAt)}`;
+    return fmt(_('resets %s · %s left'), when, left);
 }
 
 export function nextDelay(failures, pollSeconds, maxSeconds) {
