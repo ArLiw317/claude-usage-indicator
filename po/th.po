@@ -1,0 +1,68 @@
+# Thai translation for Claude Usage for GNOME.
+msgid ""
+msgstr ""
+"Project-Id-Version: claude-usage\n"
+"Language: th\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Claude usage"
+msgstr "การใช้งาน Claude"
+
+msgid "Claude %s usage"
+msgstr "การใช้งาน Claude %s"
+
+msgid "Claude usage: session %s%, week %s%"
+msgstr "การใช้งาน Claude: session %s%, สัปดาห์ %s%"
+
+msgid "Current session"
+msgstr "Session ปัจจุบัน"
+
+msgid "This week"
+msgstr "สัปดาห์นี้"
+
+msgid "Loading…"
+msgstr "กำลังโหลด…"
+
+msgid "Refresh"
+msgstr "รีเฟรช"
+
+msgid "Updated %s"
+msgstr "อัปเดต %s"
+
+msgid "Stale data · run claude to refresh the token"
+msgstr "ข้อมูลเก่า · เปิด claude เพื่อ refresh token"
+
+msgid "Could not fetch data (%s)"
+msgstr "ดึงข้อมูลไม่ได้ (%s)"
+
+msgid "reset time unknown"
+msgstr "ไม่ทราบเวลา reset"
+
+msgid "resetting now"
+msgstr "reset แล้ว"
+
+msgid "resets %s · %s left"
+msgstr "reset %s · อีก %s"
+
+msgid "Sun"
+msgstr "อา."
+
+msgid "Mon"
+msgstr "จ."
+
+msgid "Tue"
+msgstr "อ."
+
+msgid "Wed"
+msgstr "พ."
+
+msgid "Thu"
+msgstr "พฤ."
+
+msgid "Fri"
+msgstr "ศ."
+
+msgid "Sat"
+msgstr "ส."

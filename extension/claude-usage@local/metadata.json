@@ -1,0 +1,11 @@
+{
+  "uuid": "claude-usage@local",
+  "name": "Claude Usage",
+  "description": "Show Claude plan usage (current session and this week) in the top panel",
+  "shell-version": [
+    "50"
+  ],
+  "version": 2,
+  "gettext-domain": "claude-usage",
+  "url": "https://github.com/ArLiw317/claude-usage-indicator"
+}
