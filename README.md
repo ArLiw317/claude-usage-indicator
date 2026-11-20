@@ -2,6 +2,8 @@
 
 A small GNOME Shell extension that shows how much of your Claude plan limits you have used, right in the top bar.
 
+<p align="center"><img src="docs/screenshot.png" alt="Dropdown showing Current session 30% and This week 4% as bar charts with reset times" width="320"></p>
+
 - **Top bar:** two concentric rings. The outer ring is the current 5-hour session, the inner ring is the 7-day (weekly) limit.
 - **Dropdown:** a bar chart for each limit with the exact percentage, when it resets, and a countdown. A footer shows the last update time and a refresh button.
 
