@@ -31,8 +31,11 @@ msgstr "รีเฟรช"
 msgid "Updated %s"
 msgstr "อัปเดต %s"
 
-msgid "Stale data · run claude to refresh the token"
-msgstr "ข้อมูลเก่า · เปิด claude เพื่อ refresh token"
+msgid "Claude Code token expired · run claude to refresh it"
+msgstr "token ของ Claude Code หมดอายุ · เปิด claude เพื่อ refresh"
+
+msgid "No data yet"
+msgstr "ยังไม่มีข้อมูล"
 
 msgid "Could not fetch data (%s)"
 msgstr "ดึงข้อมูลไม่ได้ (%s)"
