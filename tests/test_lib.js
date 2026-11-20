@@ -56,6 +56,33 @@ test('reset is translated', () => {
 });
 test('fmt', () => eq(Lib.fmt('a %s b %s%', 1, 2), 'a 1 b 2%'));
 
+test('formatWhen same day / other day', () => {
+    eq(Lib.formatWhen(new Date('2026-11-19T10:55:00Z'), now), '17:55');
+    eq(Lib.formatWhen(new Date('2026-11-18T10:55:00Z'), now), 'Wed 17:55');
+});
+test('cache round trip', () => {
+    const state = {
+        plan: 'pro',
+        fetchedAt: new Date('2026-11-19T10:55:00Z'),
+        usage: {
+            session: {percent: 48, resetsAt: new Date('2026-11-19T11:20:00Z')},
+            week: {percent: 42, resetsAt: null},
+        },
+    };
+    const text = Lib.serializeCache({...state, error: 'x', token: 'SECRET'});
+    if (text.includes('SECRET')) throw new Error('token leaked into cache');
+    const back = Lib.parseCache(text);
+    eq(back.plan, 'pro');
+    eq(back.fetchedAt.toISOString(), '2026-11-19T10:55:00.000Z');
+    eq(back.usage.session.percent, 48);
+    eq(back.usage.session.resetsAt.toISOString(), '2026-11-19T11:20:00.000Z');
+    eq(back.usage.week.resetsAt, null);
+});
+test('cache rejects junk', () => eq(
+    [Lib.parseCache('nope'), Lib.parseCache('{}'), Lib.parseCache('{"version":2}'),
+     Lib.parseCache('{"version":1,"fetchedAt":"2026-11-19T10:55:00Z","session":{},"week":{"percent":1}}')],
+    [null, null, null, null]));
+
 test('backoff', () => eq([0, 1, 2, 5, 9].map(f => Lib.nextDelay(f, 180, 1800)), [180, 360, 720, 1800, 1800]));
 
 print(`${passed} passed, ${failed} failed`);

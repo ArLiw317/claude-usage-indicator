@@ -74,6 +74,12 @@ export function fmt(template, ...args) {
 }
 
 // `_` is the gettext function; tests pass the identity to get English.
+export function formatWhen(date, now, _ = s => s) {
+    if (date.toDateString() === now.toDateString())
+        return formatClock(date);
+    return `${_(DAYS[date.getDay()])} ${formatClock(date)}`;
+}
+
 export function formatReset(resetsAt, now, _ = s => s) {
     if (!resetsAt)
         return _('reset time unknown');
@@ -82,9 +88,41 @@ export function formatReset(resetsAt, now, _ = s => s) {
         return _('resetting now');
     const h = Math.floor(mins / 60);
     const left = h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${pad(mins % 60)}m`;
-    const sameDay = resetsAt.toDateString() === now.toDateString();
-    const when = sameDay ? formatClock(resetsAt) : `${_(DAYS[resetsAt.getDay()])} ${formatClock(resetsAt)}`;
-    return fmt(_('resets %s · %s left'), when, left);
+    return fmt(_('resets %s · %s left'), formatWhen(resetsAt, now, _), left);
+}
+
+// Last good result, kept on disk so a fresh login can show it (greyed out)
+// before the first successful fetch. Never contains the token.
+export function serializeCache({usage, plan, fetchedAt}) {
+    const win = w => ({percent: w.percent, resetsAt: w.resetsAt?.toISOString() ?? null});
+    return JSON.stringify({
+        version: 1,
+        plan: plan ?? null,
+        fetchedAt: fetchedAt.toISOString(),
+        session: win(usage.session),
+        week: win(usage.week),
+    });
+}
+
+export function parseCache(text) {
+    try {
+        const d = JSON.parse(text);
+        const win = w => {
+            if (typeof w?.percent !== 'number')
+                throw new Error('bad window');
+            return {percent: Math.min(100, Math.max(0, w.percent)), resetsAt: parseTime(w.resetsAt)};
+        };
+        const fetchedAt = parseTime(d.fetchedAt);
+        if (d.version !== 1 || !fetchedAt)
+            return null;
+        return {
+            usage: {session: win(d.session), week: win(d.week)},
+            plan: typeof d.plan === 'string' ? d.plan : null,
+            fetchedAt,
+        };
+    } catch {
+        return null;
+    }
 }
 
 export function nextDelay(failures, pollSeconds, maxSeconds) {

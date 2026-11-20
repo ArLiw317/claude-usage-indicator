@@ -58,14 +58,14 @@ The extension only **reads** the token:
 - It never refreshes the token and never writes to the credentials file. Refreshing would rotate Claude Code's refresh token and could log Claude Code out, so this is left to Claude Code.
 - The token is sent only to `api.anthropic.com`. It is never logged or stored anywhere else.
 
-The downside: access tokens are short-lived (about an hour or two). If you haven't used Claude Code for a while, the token expires, the charts turn grey, and the dropdown says the data is stale. The last known values stay on screen. Running `claude` once refreshes the token, and the extension recovers on its next poll.
+The downside: access tokens are short-lived (about an hour or two). If you haven't used Claude Code for a while, the token expires, the charts turn grey, and the dropdown says the token expired. The last known values stay on screen, even after you log out and back in: they are cached in `~/.cache/claude-usage/last.json` (percentages and times only, never the token). Running `claude` and sending one message refreshes the token, and the extension recovers on its next poll or when you press Refresh.
 
 ## Troubleshooting
 
 | Symptom | What to check |
 |---|---|
 | No icon after install | Log out and back in. Then run `gnome-extensions info claude-usage@local`. |
-| Grey charts, "Stale data · run claude to refresh the token" | The Claude Code token has expired. Run `claude` once. |
+| Grey charts, "Claude Code token expired · run claude to refresh it" | The token expired because Claude Code hasn't run for a while. Run `claude` and send one message, then press Refresh. |
 | "Could not fetch data (HTTP …)" | The usage endpoint returned an error. It retries with backoff. If it persists, the endpoint may have changed. |
 | Anything else | `journalctl --user -b /usr/bin/gnome-shell \| grep -i claude` |
 

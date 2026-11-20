@@ -189,7 +189,10 @@ class Indicator extends PanelMenu.Button {
         this._week.update(usage?.week, stale, now);
         this._notice.visible = Boolean(error);
         this._notice.label.text = error ?? '';
-        this._status.text = fetchedAt ? Lib.fmt(_('Updated %s'), Lib.formatClock(fetchedAt)) : _('Loading…');
+        if (fetchedAt)
+            this._status.text = Lib.fmt(_('Updated %s'), Lib.formatWhen(fetchedAt, now, _));
+        else
+            this._status.text = error ? _('No data yet') : _('Loading…');
 
         const s = usage?.session.percent ?? 0;
         const w = usage?.week.percent ?? 0;
@@ -213,6 +216,8 @@ export default class ClaudeUsageExtension extends Extension {
         this._cancellable = new Gio.Cancellable();
         this._session = new Soup.Session({timeout: 15, user_agent: 'claude-usage-gnome/0.2'});
         this._credFile = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_home_dir(), '.claude', '.credentials.json']));
+        this._cacheDir = GLib.build_filenamev([GLib.get_user_cache_dir(), 'claude-usage']);
+        this._cacheFile = Gio.File.new_for_path(GLib.build_filenamev([this._cacheDir, 'last.json']));
         this._state = {usage: null, error: null, plan: null, fetchedAt: null};
         this._failures = 0;
         this._busy = false;
@@ -220,7 +225,7 @@ export default class ClaudeUsageExtension extends Extension {
 
         this._indicator = new Indicator(() => this._refresh());
         Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
-        this._refresh();
+        this._loadCache().then(() => this._refresh());
     }
 
     disable() {
@@ -234,6 +239,35 @@ export default class ClaudeUsageExtension extends Extension {
         this._session = null;
         this._cancellable = null;
         this._credFile = null;
+        this._cacheFile = null;
+    }
+
+    async _loadCache() {
+        try {
+            const [bytes] = await this._cacheFile.load_contents_async(this._cancellable);
+            const cached = Lib.parseCache(decoder.decode(bytes));
+            if (cached && !this._state.fetchedAt)
+                this._state = {...cached, error: null};
+        } catch {
+            // No cache yet, unreadable, or disabled meanwhile: start empty.
+        }
+    }
+
+    _saveCache() {
+        try {
+            GLib.mkdir_with_parents(this._cacheDir, 0o700);
+            const bytes = new GLib.Bytes(new TextEncoder().encode(Lib.serializeCache(this._state)));
+            this._cacheFile.replace_contents_bytes_async(
+                bytes, null, false, Gio.FileCreateFlags.PRIVATE, null, (file, res) => {
+                    try {
+                        file.replace_contents_finish(res);
+                    } catch {
+                        // Cache is best effort.
+                    }
+                });
+        } catch {
+            // Cache is best effort.
+        }
     }
 
     async _readCredentials() {
@@ -289,13 +323,14 @@ export default class ClaudeUsageExtension extends Extension {
             const usage = await this._fetch(token);
             this._state = {usage, plan, error: null, fetchedAt: new Date()};
             this._failures = 0;
+            this._saveCache();
         } catch (e) {
             if (cancellable.is_cancelled())
                 return; // disabled while in flight
             this._failures++;
             tokenProblem = e instanceof Lib.TokenExpired;
             const msg = tokenProblem
-                ? _('Stale data · run claude to refresh the token')
+                ? _('Claude Code token expired · run claude to refresh it')
                 : Lib.fmt(_('Could not fetch data (%s)'), e instanceof Lib.FetchError ? e.message : 'error');
             this._state = {...this._state, error: msg};
         } finally {
